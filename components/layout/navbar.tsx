@@ -1,20 +1,63 @@
 import Link from 'next/link'
-import { Building2 } from 'lucide-react'
+import { Building2, Bell, PlusCircle } from 'lucide-react'
+import { UserMenu } from './user-menu'
+import { cn } from '@/lib/utils'
 
-export function Navbar() {
+type NavbarProps = {
+  user: { name: string; email: string; avatarUrl: string | null }
+}
+
+export function Navbar({ user }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-50 border-b bg-primary text-primary-foreground shadow-sm">
+    <header className="sticky top-0 z-50 border-b border-primary/20 bg-primary shadow-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-          <Building2 className="h-5 w-5" />
-          CivicReport
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 text-primary-foreground">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
+            <Building2 className="h-4 w-4" />
+          </div>
+          <span className="font-bold text-lg tracking-tight">CivicReport</span>
         </Link>
-        <nav className="flex items-center gap-6 text-sm font-medium">
-          <Link href="/" className="opacity-90 hover:opacity-100 transition-opacity">Feed</Link>
-          <Link href="/complaint/create" className="opacity-90 hover:opacity-100 transition-opacity">Report Issue</Link>
-          <Link href="/notifications" className="opacity-90 hover:opacity-100 transition-opacity">Notifications</Link>
-          <Link href="/profile" className="opacity-90 hover:opacity-100 transition-opacity">Profile</Link>
+
+        {/* Nav links */}
+        <nav className="hidden md:flex items-center gap-1">
+          <Link
+            href="/"
+            className="rounded-md px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            Feed
+          </Link>
+          <Link
+            href="/complaint/create"
+            className="rounded-md px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            Report Issue
+          </Link>
         </nav>
+
+        {/* Right side */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/complaint/create"
+            className={cn(
+              'hidden sm:inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
+              'bg-white/15 hover:bg-white/25 text-white border border-white/20'
+            )}
+          >
+            <PlusCircle className="h-4 w-4" />
+            Report
+          </Link>
+
+          <Link
+            href="/notifications"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full text-white/80 hover:bg-white/15 hover:text-white transition-colors"
+            aria-label="Notifications"
+          >
+            <Bell className="h-5 w-5" />
+          </Link>
+
+          <UserMenu user={user} />
+        </div>
       </div>
     </header>
   )
