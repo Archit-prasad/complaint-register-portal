@@ -150,3 +150,51 @@ export const getUnreadNotificationCount = cache(async (userId: string): Promise<
     .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)))
   return result?.count ?? 0
 })
+
+export type AdminStats = {
+  total: number
+  pending: number
+  inReview: number
+  resolved: number
+}
+
+export const getAdminStats = cache(async (): Promise<AdminStats> => {
+  const [result] = await db
+    .select({
+      total:    sql<number>`cast(count(*) as integer)`,
+      pending:  sql<number>`cast(count(*) filter (where ${complaints.status} = 'pending') as integer)`,
+      inReview: sql<number>`cast(count(*) filter (where ${complaints.status} = 'in_review') as integer)`,
+      resolved: sql<number>`cast(count(*) filter (where ${complaints.status} = 'resolved') as integer)`,
+    })
+    .from(complaints)
+  return result ?? { total: 0, pending: 0, inReview: 0, resolved: 0 }
+})
+
+export const getAdminComplaints = cache(async (status?: string): Promise<FeedComplaint[]> => {
+  const rows = await db
+    .select({
+      id:             complaints.id,
+      userId:         complaints.userId,
+      title:          complaints.title,
+      description:    complaints.description,
+      location:       complaints.location,
+      imageUrl:       complaints.imageUrl,
+      resultImageUrl: complaints.resultImageUrl,
+      status:         complaints.status,
+      createdAt:      complaints.createdAt,
+      updatedAt:      complaints.updatedAt,
+      userName:       users.name,
+      userAvatar:     users.avatarUrl,
+      likeCount:      sql<number>`cast(count(distinct ${likes.id}) as integer)`,
+      commentCount:   sql<number>`cast(count(distinct ${comments.id}) as integer)`,
+    })
+    .from(complaints)
+    .innerJoin(users, eq(complaints.userId, users.id))
+    .leftJoin(likes, eq(likes.complaintId, complaints.id))
+    .leftJoin(comments, eq(comments.complaintId, complaints.id))
+    .where(status ? eq(complaints.status, status as 'pending' | 'in_review' | 'resolved') : undefined)
+    .groupBy(complaints.id, users.id)
+    .orderBy(desc(complaints.createdAt))
+
+  return rows.map((r) => ({ ...r, liked: false }))
+})

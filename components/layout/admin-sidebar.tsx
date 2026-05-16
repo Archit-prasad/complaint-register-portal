@@ -1,10 +1,9 @@
 import Link from 'next/link'
-import { Building2, LayoutDashboard, FileText } from 'lucide-react'
+import { Building2, LayoutDashboard } from 'lucide-react'
 import { AdminLogoutButton } from './admin-logout-button'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin', label: 'All Complaints', icon: FileText },
 ]
 
 export function AdminSidebar() {

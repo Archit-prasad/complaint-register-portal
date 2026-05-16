@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { FeedComplaint } from '@/types'
@@ -11,6 +12,14 @@ const statusConfig = {
 } as const
 
 export function ComplaintsTable({ complaints }: { complaints: FeedComplaint[] }) {
+  if (complaints.length === 0) {
+    return (
+      <div className="rounded-lg border bg-card py-16 text-center text-sm text-muted-foreground shadow-sm">
+        No complaints to display.
+      </div>
+    )
+  }
+
   return (
     <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
       <Table>
@@ -27,8 +36,15 @@ export function ComplaintsTable({ complaints }: { complaints: FeedComplaint[] })
           {complaints.map((c) => {
             const s = statusConfig[c.status]
             return (
-              <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50">
-                <TableCell className="font-medium">{c.title}</TableCell>
+              <TableRow key={c.id} className="hover:bg-muted/50">
+                <TableCell>
+                  <Link
+                    href={`/admin/complaints/${c.id}`}
+                    className="font-medium hover:text-primary hover:underline"
+                  >
+                    {c.title}
+                  </Link>
+                </TableCell>
                 <TableCell className="text-muted-foreground">{c.location}</TableCell>
                 <TableCell className="text-muted-foreground">{c.userName}</TableCell>
                 <TableCell>
