@@ -11,7 +11,8 @@ export type User = {
   createdAt: Date
 }
 
-export type Complaint = {
+/** Shape returned by feed / detail queries */
+export type FeedComplaint = {
   id: string
   userId: string
   title: string
@@ -22,18 +23,20 @@ export type Complaint = {
   status: ComplaintStatus
   createdAt: Date
   updatedAt: Date
-  user?: Pick<User, 'id' | 'name' | 'avatarUrl'>
-  _count?: { likes: number; comments: number }
-  liked?: boolean
+  userName: string
+  userAvatar: string | null
+  likeCount: number
+  commentCount: number
+  liked: boolean
 }
 
-export type Comment = {
+export type CommentWithUser = {
   id: string
-  complaintId: string
-  userId: string
   content: string
   createdAt: Date
-  user?: Pick<User, 'id' | 'name' | 'avatarUrl'>
+  userId: string
+  userName: string
+  userAvatar: string | null
 }
 
 export type Notification = {
@@ -46,11 +49,12 @@ export type Notification = {
   createdAt: Date
 }
 
-export type ActionResult<T = void> =
-  | { success: true; data?: T }
-  | { success: false; error: string }
-
 export type FormState = {
   errors?: Record<string, string[]>
   message?: string
+  success?: boolean
 } | undefined
+
+export type ActionResult<T = void> =
+  | { success: true; data?: T }
+  | { success: false; error: string }

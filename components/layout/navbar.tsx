@@ -5,9 +5,10 @@ import { cn } from '@/lib/utils'
 
 type NavbarProps = {
   user: { name: string; email: string; avatarUrl: string | null }
+  notificationCount?: number
 }
 
-export function Navbar({ user }: NavbarProps) {
+export function Navbar({ user, notificationCount = 0 }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 border-b border-primary/20 bg-primary shadow-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
@@ -54,6 +55,11 @@ export function Navbar({ user }: NavbarProps) {
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-accent-foreground">
+                {notificationCount > 9 ? '9+' : notificationCount}
+              </span>
+            )}
           </Link>
 
           <UserMenu user={user} />

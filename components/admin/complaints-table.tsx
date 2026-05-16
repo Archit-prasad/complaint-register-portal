@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import type { Complaint } from '@/types'
+import type { FeedComplaint } from '@/types'
 
 const statusConfig = {
   pending:   { label: 'Pending',   className: 'bg-accent/20 text-accent-foreground border-accent' },
@@ -10,7 +10,7 @@ const statusConfig = {
   resolved:  { label: 'Resolved',  className: 'bg-secondary/20 text-secondary border-secondary' },
 } as const
 
-export function ComplaintsTable({ complaints }: { complaints: Complaint[] }) {
+export function ComplaintsTable({ complaints }: { complaints: FeedComplaint[] }) {
   return (
     <div className="rounded-lg border bg-card shadow-sm overflow-hidden">
       <Table>
@@ -30,7 +30,7 @@ export function ComplaintsTable({ complaints }: { complaints: Complaint[] }) {
               <TableRow key={c.id} className="cursor-pointer hover:bg-muted/50">
                 <TableCell className="font-medium">{c.title}</TableCell>
                 <TableCell className="text-muted-foreground">{c.location}</TableCell>
-                <TableCell className="text-muted-foreground">{c.user?.name ?? '—'}</TableCell>
+                <TableCell className="text-muted-foreground">{c.userName}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className={s.className}>{s.label}</Badge>
                 </TableCell>

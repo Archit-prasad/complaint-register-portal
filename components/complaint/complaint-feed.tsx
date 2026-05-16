@@ -1,7 +1,7 @@
 import { ComplaintCard } from './complaint-card'
-import type { Complaint } from '@/types'
+import type { FeedComplaint } from '@/types'
 
-export function ComplaintFeed({ complaints }: { complaints: Complaint[] }) {
+export function ComplaintFeed({ complaints }: { complaints: FeedComplaint[] }) {
   if (complaints.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">

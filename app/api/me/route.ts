@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { getUser } from '@/lib/dal'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   const user = await getUser()
   if (!user) return new NextResponse(null, { status: 401 })
