@@ -13,7 +13,7 @@ export function Navbar({ user, notificationCount = 0 }: NavbarProps) {
     <header className="sticky top-0 z-50 border-b border-primary/20 bg-primary shadow-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 text-primary-foreground">
+        <Link href="/feed" className="flex items-center gap-2 text-primary-foreground">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20">
             <Building2 className="h-4 w-4" />
           </div>
@@ -23,7 +23,7 @@ export function Navbar({ user, notificationCount = 0 }: NavbarProps) {
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-1">
           <Link
-            href="/"
+            href="/feed"
             className="rounded-md px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white transition-colors"
           >
             Feed

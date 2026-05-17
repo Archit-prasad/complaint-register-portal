@@ -21,7 +21,7 @@ export function CreateComplaintForm() {
   }
 
   return (
-    <form action={action} className="space-y-6" encType="multipart/form-data">
+    <form action={action} className="space-y-6">
       {/* Title */}
       <div className="space-y-1.5">
         <Label htmlFor="title">Issue title <span className="text-destructive">*</span></Label>

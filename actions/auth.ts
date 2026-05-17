@@ -42,7 +42,7 @@ export async function login(prevState: FormState, formData: FormData): Promise<F
   }
 
   await createSession(user.id, user.role)
-  redirect(user.role === 'admin' ? '/admin' : '/')
+  redirect(user.role === 'admin' ? '/admin' : '/feed')
 }
 
 export async function register(prevState: FormState, formData: FormData): Promise<FormState> {
@@ -79,7 +79,7 @@ export async function register(prevState: FormState, formData: FormData): Promis
   }
 
   await createSession(newUser.id, newUser.role)
-  redirect('/')
+  redirect('/feed')
 }
 
 export async function logout() {

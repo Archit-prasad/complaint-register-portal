@@ -58,8 +58,8 @@ export async function createComplaint(prevState: FormState, formData: FormData):
 
   if (!complaint) return { message: 'Failed to submit complaint. Please try again.' }
 
-  revalidatePath('/')
-  redirect('/')
+  revalidatePath('/feed')
+  redirect('/feed')
 }
 
 export async function toggleLike(complaintId: string) {
@@ -90,7 +90,7 @@ export async function toggleLike(complaintId: string) {
     }
   }
 
-  revalidatePath('/')
+  revalidatePath('/feed')
   revalidatePath(`/complaint/${complaintId}`)
 }
 

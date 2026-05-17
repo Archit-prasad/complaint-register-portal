@@ -24,7 +24,7 @@ export function ResultImageForm({
   }
 
   return (
-    <form action={action} className="flex flex-col gap-3" encType="multipart/form-data">
+    <form action={action} className="flex flex-col gap-3">
       <input type="hidden" name="complaintId" value={complaintId} />
 
       <p className="text-sm font-medium text-foreground">Upload Result Photo</p>

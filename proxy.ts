@@ -1,34 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { decrypt } from '@/lib/session'
 
-const publicRoutes = ['/login', '/register']
-const adminRoutes = ['/admin']
+// In Next.js 16, Proxy replaces Middleware. Named "proxy" export is the standard.
+const AUTH_ROUTES = ['/login', '/register']
+const ADMIN_ROUTES = ['/admin']
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r))
-  const isAdminRoute = adminRoutes.some((r) => pathname.startsWith(r))
+  const isAuthRoute = AUTH_ROUTES.some((r) => pathname.startsWith(r))
+  const isAdminRoute = ADMIN_ROUTES.some((r) => pathname.startsWith(r))
+  const isLanding = pathname === '/'
 
   const token = req.cookies.get('session')?.value
   const session = await decrypt(token)
 
+  // Unauthenticated: allow landing + auth pages, block everything else
   if (!session?.userId) {
-    if (!isPublicRoute) {
-      return NextResponse.redirect(new URL('/login', req.nextUrl))
-    }
-    return NextResponse.next()
+    if (isLanding || isAuthRoute) return NextResponse.next()
+    return NextResponse.redirect(new URL('/login', req.nextUrl))
   }
 
-  // Admin-only guard
-  if (isAdminRoute && session.role !== 'admin') {
-    return NextResponse.redirect(new URL('/', req.nextUrl))
-  }
-
-  // Redirect authenticated users away from auth pages
-  if (isPublicRoute) {
-    const dest = session.role === 'admin' ? '/admin' : '/'
+  // Authenticated: bounce off landing and auth pages toward the app
+  if (isLanding || isAuthRoute) {
+    const dest = session.role === 'admin' ? '/admin' : '/feed'
     return NextResponse.redirect(new URL(dest, req.nextUrl))
+  }
+
+  // Non-admin trying to reach /admin
+  if (isAdminRoute && session.role !== 'admin') {
+    return NextResponse.redirect(new URL('/feed', req.nextUrl))
   }
 
   return NextResponse.next()

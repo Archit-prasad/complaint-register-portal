@@ -45,7 +45,7 @@ export async function updateComplaintStatus(prevState: FormState, formData: Form
 
   revalidatePath('/admin')
   revalidatePath(`/admin/complaints/${complaintId}`)
-  revalidatePath('/')
+  revalidatePath('/feed')
   revalidatePath(`/complaint/${complaintId}`)
 
   return { success: true }
@@ -82,7 +82,7 @@ export async function uploadResultImage(prevState: FormState, formData: FormData
 
   revalidatePath('/admin')
   revalidatePath(`/admin/complaints/${complaintId}`)
-  revalidatePath('/')
+  revalidatePath('/feed')
   revalidatePath(`/complaint/${complaintId}`)
 
   return { success: true }

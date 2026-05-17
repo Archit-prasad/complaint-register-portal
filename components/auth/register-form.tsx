@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import { register } from '@/actions/auth'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ const passwordRules = [
 
 export function RegisterForm() {
   const [state, action, pending] = useActionState(register, undefined)
+  const [password, setPassword] = useState('')
 
   return (
     <form action={action} className="space-y-5">
@@ -66,15 +67,29 @@ export function RegisterForm() {
           autoComplete="new-password"
           placeholder="••••••••"
           className="h-11"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           required
         />
         <ul className="mt-2 space-y-1">
-          {passwordRules.map((rule) => (
-            <li key={rule.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-              {rule.label}
-            </li>
-          ))}
+          {passwordRules.map((rule) => {
+            const met = password.length > 0 && rule.test(password)
+            return (
+              <li
+                key={rule.label}
+                className={`flex items-center gap-1.5 text-xs transition-colors ${
+                  met ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
+                }`}
+              >
+                <CheckCircle2
+                  className={`h-3.5 w-3.5 shrink-0 transition-colors ${
+                    met ? 'text-green-600 dark:text-green-400' : ''
+                  }`}
+                />
+                {rule.label}
+              </li>
+            )
+          })}
         </ul>
         {state?.errors?.password && (
           <p className="text-sm text-destructive flex items-center gap-1">
