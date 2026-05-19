@@ -1,7 +1,7 @@
 import 'server-only'
 import { cache } from 'react'
 import { db } from '@/lib/db'
-import { complaints, users, likes, comments, notifications } from '@/lib/db/schema'
+import { complaints, users, likes, upvotes, comments, notifications } from '@/lib/db/schema'
 import { eq, desc, sql, and } from 'drizzle-orm'
 import type { FeedComplaint, CommentWithUser, Notification, AdminUser } from '@/types'
 
@@ -21,26 +21,30 @@ export const getComplaints = cache(async (currentUserId?: string): Promise<FeedC
       updatedAt: complaints.updatedAt,
       userName: users.name,
       userAvatar: users.avatarUrl,
-      likeCount: sql<number>`cast(count(distinct ${likes.id}) as integer)`,
+      likeCount:    sql<number>`cast(count(distinct ${likes.id})   as integer)`,
+      upvoteCount:  sql<number>`cast(count(distinct ${upvotes.id}) as integer)`,
       commentCount: sql<number>`cast(count(distinct ${comments.id}) as integer)`,
     })
     .from(complaints)
     .innerJoin(users, eq(complaints.userId, users.id))
-    .leftJoin(likes, eq(likes.complaintId, complaints.id))
+    .leftJoin(likes,    eq(likes.complaintId,    complaints.id))
+    .leftJoin(upvotes,  eq(upvotes.complaintId,  complaints.id))
     .leftJoin(comments, eq(comments.complaintId, complaints.id))
     .groupBy(complaints.id, users.id)
     .orderBy(desc(complaints.createdAt))
 
-  const likedSet = new Set<string>()
+  const likedSet   = new Set<string>()
+  const upvotedSet = new Set<string>()
   if (currentUserId) {
-    const userLikes = await db
-      .select({ complaintId: likes.complaintId })
-      .from(likes)
-      .where(eq(likes.userId, currentUserId))
+    const [userLikes, userUpvotes] = await Promise.all([
+      db.select({ complaintId: likes.complaintId }).from(likes).where(eq(likes.userId, currentUserId)),
+      db.select({ complaintId: upvotes.complaintId }).from(upvotes).where(eq(upvotes.userId, currentUserId)),
+    ])
     userLikes.forEach((l) => likedSet.add(l.complaintId))
+    userUpvotes.forEach((u) => upvotedSet.add(u.complaintId))
   }
 
-  return rows.map((r) => ({ ...r, liked: likedSet.has(r.id) }))
+  return rows.map((r) => ({ ...r, liked: likedSet.has(r.id), upvoted: upvotedSet.has(r.id) }))
 })
 
 export const getComplaint = cache(async (id: string, currentUserId?: string): Promise<FeedComplaint | null> => {
@@ -59,28 +63,31 @@ export const getComplaint = cache(async (id: string, currentUserId?: string): Pr
       updatedAt: complaints.updatedAt,
       userName: users.name,
       userAvatar: users.avatarUrl,
-      likeCount: sql<number>`cast(count(distinct ${likes.id}) as integer)`,
+      likeCount:    sql<number>`cast(count(distinct ${likes.id})   as integer)`,
+      upvoteCount:  sql<number>`cast(count(distinct ${upvotes.id}) as integer)`,
       commentCount: sql<number>`cast(count(distinct ${comments.id}) as integer)`,
     })
     .from(complaints)
     .innerJoin(users, eq(complaints.userId, users.id))
-    .leftJoin(likes, eq(likes.complaintId, complaints.id))
+    .leftJoin(likes,    eq(likes.complaintId,    complaints.id))
+    .leftJoin(upvotes,  eq(upvotes.complaintId,  complaints.id))
     .leftJoin(comments, eq(comments.complaintId, complaints.id))
     .where(eq(complaints.id, id))
     .groupBy(complaints.id, users.id)
 
   if (!row) return null
 
-  let liked = false
+  let liked = false, upvoted = false
   if (currentUserId) {
-    const [likedRow] = await db
-      .select({ id: likes.id })
-      .from(likes)
-      .where(and(eq(likes.complaintId, id), eq(likes.userId, currentUserId)))
-    liked = !!likedRow
+    const [likedRow, upvotedRow] = await Promise.all([
+      db.select({ id: likes.id }).from(likes).where(and(eq(likes.complaintId, id), eq(likes.userId, currentUserId))),
+      db.select({ id: upvotes.id }).from(upvotes).where(and(eq(upvotes.complaintId, id), eq(upvotes.userId, currentUserId))),
+    ])
+    liked   = !!likedRow[0]
+    upvoted = !!upvotedRow[0]
   }
 
-  return { ...row, liked }
+  return { ...row, liked, upvoted }
 })
 
 export const getComments = cache(async (complaintId: string): Promise<CommentWithUser[]> => {
@@ -115,18 +122,20 @@ export const getUserComplaints = cache(async (userId: string): Promise<FeedCompl
       updatedAt: complaints.updatedAt,
       userName: users.name,
       userAvatar: users.avatarUrl,
-      likeCount: sql<number>`cast(count(distinct ${likes.id}) as integer)`,
+      likeCount:    sql<number>`cast(count(distinct ${likes.id})   as integer)`,
+      upvoteCount:  sql<number>`cast(count(distinct ${upvotes.id}) as integer)`,
       commentCount: sql<number>`cast(count(distinct ${comments.id}) as integer)`,
     })
     .from(complaints)
     .innerJoin(users, eq(complaints.userId, users.id))
-    .leftJoin(likes, eq(likes.complaintId, complaints.id))
+    .leftJoin(likes,    eq(likes.complaintId,    complaints.id))
+    .leftJoin(upvotes,  eq(upvotes.complaintId,  complaints.id))
     .leftJoin(comments, eq(comments.complaintId, complaints.id))
     .where(eq(complaints.userId, userId))
     .groupBy(complaints.id, users.id)
     .orderBy(desc(complaints.createdAt))
 
-  return rows.map((r) => ({ ...r, liked: false }))
+  return rows.map((r) => ({ ...r, liked: false, upvoted: false }))
 })
 
 export const getNotifications = cache(async (userId: string): Promise<Notification[]> => {
@@ -189,18 +198,20 @@ export const getAdminComplaints = cache(async (status?: string): Promise<FeedCom
       updatedAt:      complaints.updatedAt,
       userName:       users.name,
       userAvatar:     users.avatarUrl,
-      likeCount:      sql<number>`cast(count(distinct ${likes.id}) as integer)`,
+      likeCount:      sql<number>`cast(count(distinct ${likes.id})   as integer)`,
+      upvoteCount:    sql<number>`cast(count(distinct ${upvotes.id}) as integer)`,
       commentCount:   sql<number>`cast(count(distinct ${comments.id}) as integer)`,
     })
     .from(complaints)
     .innerJoin(users, eq(complaints.userId, users.id))
-    .leftJoin(likes, eq(likes.complaintId, complaints.id))
+    .leftJoin(likes,    eq(likes.complaintId,    complaints.id))
+    .leftJoin(upvotes,  eq(upvotes.complaintId,  complaints.id))
     .leftJoin(comments, eq(comments.complaintId, complaints.id))
     .where(status ? eq(complaints.status, status as 'pending' | 'in_review' | 'resolved') : undefined)
     .groupBy(complaints.id, users.id)
     .orderBy(desc(complaints.createdAt))
 
-  return rows.map((r) => ({ ...r, liked: false }))
+  return rows.map((r) => ({ ...r, liked: false, upvoted: false }))
 })
 
 export const getPriorityQueue = cache(async (): Promise<FeedComplaint[]> => {
@@ -219,17 +230,27 @@ export const getPriorityQueue = cache(async (): Promise<FeedComplaint[]> => {
       updatedAt:      complaints.updatedAt,
       userName:       users.name,
       userAvatar:     users.avatarUrl,
-      likeCount:      sql<number>`cast(count(distinct ${likes.id}) as integer)`,
+      likeCount:      sql<number>`cast(count(distinct ${likes.id})   as integer)`,
+      upvoteCount:    sql<number>`cast(count(distinct ${upvotes.id}) as integer)`,
       commentCount:   sql<number>`cast(count(distinct ${comments.id}) as integer)`,
     })
     .from(complaints)
     .innerJoin(users, eq(complaints.userId, users.id))
-    .leftJoin(likes, eq(likes.complaintId, complaints.id))
+    .leftJoin(likes,    eq(likes.complaintId,    complaints.id))
+    .leftJoin(upvotes,  eq(upvotes.complaintId,  complaints.id))
     .leftJoin(comments, eq(comments.complaintId, complaints.id))
     .groupBy(complaints.id, users.id)
     .orderBy(desc(complaints.priorityLikes), desc(complaints.createdAt))
 
-  return rows.map((r) => ({ ...r, liked: false }))
+  return rows.map((r) => ({ ...r, liked: false, upvoted: false }))
+})
+
+export const getResolvedCount = cache(async (): Promise<number> => {
+  const [result] = await db
+    .select({ count: sql<number>`cast(count(*) as integer)` })
+    .from(complaints)
+    .where(eq(complaints.status, 'resolved'))
+  return result?.count ?? 0
 })
 
 export const getAdminUsers = cache(async (): Promise<AdminUser[]> => {

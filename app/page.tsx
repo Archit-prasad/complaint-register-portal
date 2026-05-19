@@ -96,6 +96,10 @@ export default function LandingPage() {
 
         </div>
       </main>
+      {/* Intellect Studio branding — permanent bottom-left attribution */}
+      <div className="fixed bottom-5 left-5 z-20 font-medium tracking-wider text-sm text-white/40 select-none pointer-events-none">
+        Intellect studio
+      </div>
     </div>
   )
 }

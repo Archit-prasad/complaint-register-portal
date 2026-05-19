@@ -39,8 +39,10 @@ export type FeedComplaint = {
   userName: string
   userAvatar: string | null
   likeCount: number
+  upvoteCount: number
   commentCount: number
   liked: boolean
+  upvoted: boolean
 }
 
 export type CommentWithUser = {

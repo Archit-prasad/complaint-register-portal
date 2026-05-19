@@ -7,7 +7,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { randomUUID } from 'node:crypto'
 import { db } from '@/lib/db'
-import { complaints, likes, comments, notifications } from '@/lib/db/schema'
+import { complaints, likes, upvotes, comments, notifications } from '@/lib/db/schema'
 import { verifySession } from '@/lib/dal'
 import { eq, and, sql } from 'drizzle-orm'
 import type { FormState } from '@/types'
@@ -62,6 +62,7 @@ export async function createComplaint(prevState: FormState, formData: FormData):
   redirect('/feed')
 }
 
+// Standard engagement like — does NOT affect the priority queue.
 export async function toggleLike(complaintId: string) {
   const session = await verifySession()
 
@@ -72,16 +73,8 @@ export async function toggleLike(complaintId: string) {
 
   if (existing) {
     await db.delete(likes).where(eq(likes.id, existing.id))
-    await db
-      .update(complaints)
-      .set({ priorityLikes: sql`GREATEST(${complaints.priorityLikes} - 1, 0)` })
-      .where(eq(complaints.id, complaintId))
   } else {
     await db.insert(likes).values({ complaintId, userId: session.userId })
-    await db
-      .update(complaints)
-      .set({ priorityLikes: sql`${complaints.priorityLikes} + 1` })
-      .where(eq(complaints.id, complaintId))
 
     const [complaint] = await db
       .select({ userId: complaints.userId })
@@ -93,9 +86,37 @@ export async function toggleLike(complaintId: string) {
         userId: complaint.userId,
         complaintId,
         type: 'like',
-        message: 'Someone upvoted your complaint.',
+        message: 'Someone liked your complaint.',
       })
     }
+  }
+
+  revalidatePath('/feed')
+  revalidatePath(`/complaint/${complaintId}`)
+}
+
+// Priority upvote — increments/decrements priorityLikes, which ranks
+// the complaint in the admin Global Priority Queue.
+export async function toggleUpvote(complaintId: string) {
+  const session = await verifySession()
+
+  const [existing] = await db
+    .select({ id: upvotes.id })
+    .from(upvotes)
+    .where(and(eq(upvotes.complaintId, complaintId), eq(upvotes.userId, session.userId)))
+
+  if (existing) {
+    await db.delete(upvotes).where(eq(upvotes.id, existing.id))
+    await db
+      .update(complaints)
+      .set({ priorityLikes: sql`GREATEST(${complaints.priorityLikes} - 1, 0)` })
+      .where(eq(complaints.id, complaintId))
+  } else {
+    await db.insert(upvotes).values({ complaintId, userId: session.userId })
+    await db
+      .update(complaints)
+      .set({ priorityLikes: sql`${complaints.priorityLikes} + 1` })
+      .where(eq(complaints.id, complaintId))
   }
 
   revalidatePath('/feed')

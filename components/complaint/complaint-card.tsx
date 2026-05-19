@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { MessageCircle, MapPin, Clock } from 'lucide-react'
 import { LikeButton } from './like-button'
+import { UpvoteButton } from './upvote-button'
 import { ComplaintImage } from './complaint-image'
 import type { FeedComplaint } from '@/types'
 
@@ -87,11 +88,16 @@ export function ComplaintCard({ complaint }: { complaint: FeedComplaint }) {
           <span className="text-xs text-muted-foreground">{complaint.userName}</span>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <LikeButton
             complaintId={complaint.id}
             initialLiked={complaint.liked}
             initialCount={complaint.likeCount}
+          />
+          <UpvoteButton
+            complaintId={complaint.id}
+            initialUpvoted={complaint.upvoted}
+            initialCount={complaint.upvoteCount}
           />
           <Link
             href={`/complaint/${complaint.id}#comments`}

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { toggleLike } from '@/actions/complaints'
-import { ArrowUp } from 'lucide-react'
+import { Heart } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 type Props = {
@@ -20,30 +20,22 @@ export function LikeButton({ complaintId, initialLiked, initialCount }: Props) {
     const next = !liked
     setLiked(next)
     setCount((c) => (next ? c + 1 : Math.max(0, c - 1)))
-
-    startTransition(async () => {
-      await toggleLike(complaintId)
-    })
+    startTransition(async () => { await toggleLike(complaintId) })
   }
 
   return (
     <button
       onClick={handleToggle}
       disabled={pending}
-      title={liked ? 'Remove upvote' : 'Upvote — raises priority'}
+      title={liked ? 'Unlike' : 'Like'}
       className={cn(
-        'flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold transition-all duration-200',
+        'flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium transition-all duration-200',
         liked
-          ? 'text-primary bg-primary/10 hover:bg-primary/20 scale-105'
-          : 'text-muted-foreground hover:text-primary hover:bg-primary/10',
+          ? 'text-rose-500 bg-rose-500/10 hover:bg-rose-500/20'
+          : 'text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10',
       )}
     >
-      <ArrowUp
-        className={cn(
-          'h-4 w-4 transition-transform duration-200',
-          liked && 'fill-primary -translate-y-0.5',
-        )}
-      />
+      <Heart className={cn('h-4 w-4 transition-transform duration-200', liked && 'fill-rose-500 scale-110')} />
       <span>{count}</span>
     </button>
   )

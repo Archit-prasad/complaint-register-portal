@@ -68,6 +68,19 @@ export const likes = pgTable(
   }),
 )
 
+export const upvotes = pgTable(
+  'upvotes',
+  {
+    id:          uuid('id').primaryKey().defaultRandom(),
+    complaintId: uuid('complaint_id').notNull().references(() => complaints.id, { onDelete: 'cascade' }),
+    userId:      uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+    createdAt:   timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => ({
+    uniqueUpvote: uniqueIndex('unique_upvote_idx').on(table.complaintId, table.userId),
+  }),
+)
+
 export const notifications = pgTable('notifications', {
   id:          uuid('id').primaryKey().defaultRandom(),
   userId:      uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),

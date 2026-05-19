@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-const HEADING = 'Responsibility of change\nlies in your hands.'
+const HEADING = 'Responsibility of\nchange lies in your\nhands.'
 
 export function AnimatedHeading() {
   const [visible, setVisible] = useState(false)
