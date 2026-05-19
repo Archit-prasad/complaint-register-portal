@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto'
 import { db } from '@/lib/db'
 import { complaints, likes, comments, notifications } from '@/lib/db/schema'
 import { verifySession } from '@/lib/dal'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, sql } from 'drizzle-orm'
 import type { FormState } from '@/types'
 
 const ComplaintSchema = z.object({
@@ -72,8 +72,16 @@ export async function toggleLike(complaintId: string) {
 
   if (existing) {
     await db.delete(likes).where(eq(likes.id, existing.id))
+    await db
+      .update(complaints)
+      .set({ priorityLikes: sql`GREATEST(${complaints.priorityLikes} - 1, 0)` })
+      .where(eq(complaints.id, complaintId))
   } else {
     await db.insert(likes).values({ complaintId, userId: session.userId })
+    await db
+      .update(complaints)
+      .set({ priorityLikes: sql`${complaints.priorityLikes} + 1` })
+      .where(eq(complaints.id, complaintId))
 
     const [complaint] = await db
       .select({ userId: complaints.userId })
@@ -85,7 +93,7 @@ export async function toggleLike(complaintId: string) {
         userId: complaint.userId,
         complaintId,
         type: 'like',
-        message: 'Someone liked your complaint.',
+        message: 'Someone upvoted your complaint.',
       })
     }
   }

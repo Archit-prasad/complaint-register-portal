@@ -3,7 +3,7 @@ import { cache } from 'react'
 import { db } from '@/lib/db'
 import { complaints, users, likes, comments, notifications } from '@/lib/db/schema'
 import { eq, desc, sql, and } from 'drizzle-orm'
-import type { FeedComplaint, CommentWithUser, Notification } from '@/types'
+import type { FeedComplaint, CommentWithUser, Notification, AdminUser } from '@/types'
 
 export const getComplaints = cache(async (currentUserId?: string): Promise<FeedComplaint[]> => {
   const rows = await db
@@ -16,6 +16,7 @@ export const getComplaints = cache(async (currentUserId?: string): Promise<FeedC
       imageUrl: complaints.imageUrl,
       resultImageUrl: complaints.resultImageUrl,
       status: complaints.status,
+      priorityLikes: complaints.priorityLikes,
       createdAt: complaints.createdAt,
       updatedAt: complaints.updatedAt,
       userName: users.name,
@@ -53,6 +54,7 @@ export const getComplaint = cache(async (id: string, currentUserId?: string): Pr
       imageUrl: complaints.imageUrl,
       resultImageUrl: complaints.resultImageUrl,
       status: complaints.status,
+      priorityLikes: complaints.priorityLikes,
       createdAt: complaints.createdAt,
       updatedAt: complaints.updatedAt,
       userName: users.name,
@@ -108,6 +110,7 @@ export const getUserComplaints = cache(async (userId: string): Promise<FeedCompl
       imageUrl: complaints.imageUrl,
       resultImageUrl: complaints.resultImageUrl,
       status: complaints.status,
+      priorityLikes: complaints.priorityLikes,
       createdAt: complaints.createdAt,
       updatedAt: complaints.updatedAt,
       userName: users.name,
@@ -181,6 +184,7 @@ export const getAdminComplaints = cache(async (status?: string): Promise<FeedCom
       imageUrl:       complaints.imageUrl,
       resultImageUrl: complaints.resultImageUrl,
       status:         complaints.status,
+      priorityLikes:  complaints.priorityLikes,
       createdAt:      complaints.createdAt,
       updatedAt:      complaints.updatedAt,
       userName:       users.name,
@@ -197,4 +201,52 @@ export const getAdminComplaints = cache(async (status?: string): Promise<FeedCom
     .orderBy(desc(complaints.createdAt))
 
   return rows.map((r) => ({ ...r, liked: false }))
+})
+
+export const getPriorityQueue = cache(async (): Promise<FeedComplaint[]> => {
+  const rows = await db
+    .select({
+      id:             complaints.id,
+      userId:         complaints.userId,
+      title:          complaints.title,
+      description:    complaints.description,
+      location:       complaints.location,
+      imageUrl:       complaints.imageUrl,
+      resultImageUrl: complaints.resultImageUrl,
+      status:         complaints.status,
+      priorityLikes:  complaints.priorityLikes,
+      createdAt:      complaints.createdAt,
+      updatedAt:      complaints.updatedAt,
+      userName:       users.name,
+      userAvatar:     users.avatarUrl,
+      likeCount:      sql<number>`cast(count(distinct ${likes.id}) as integer)`,
+      commentCount:   sql<number>`cast(count(distinct ${comments.id}) as integer)`,
+    })
+    .from(complaints)
+    .innerJoin(users, eq(complaints.userId, users.id))
+    .leftJoin(likes, eq(likes.complaintId, complaints.id))
+    .leftJoin(comments, eq(comments.complaintId, complaints.id))
+    .groupBy(complaints.id, users.id)
+    .orderBy(desc(complaints.priorityLikes), desc(complaints.createdAt))
+
+  return rows.map((r) => ({ ...r, liked: false }))
+})
+
+export const getAdminUsers = cache(async (): Promise<AdminUser[]> => {
+  const rows = await db
+    .select({
+      id:             users.id,
+      name:           users.name,
+      email:          users.email,
+      role:           users.role,
+      status:         users.status,
+      createdAt:      users.createdAt,
+      complaintCount: sql<number>`cast(count(distinct ${complaints.id}) as integer)`,
+    })
+    .from(users)
+    .leftJoin(complaints, eq(complaints.userId, users.id))
+    .groupBy(users.id)
+    .orderBy(desc(users.createdAt))
+
+  return rows
 })

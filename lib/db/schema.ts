@@ -4,11 +4,13 @@ import {
   uuid,
   text,
   boolean,
+  integer,
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
 
 export const userRoleEnum = pgEnum('user_role', ['user', 'admin'])
+export const userStatusEnum = pgEnum('user_status', ['active', 'banned'])
 export const complaintStatusEnum = pgEnum('complaint_status', [
   'pending',
   'in_review',
@@ -26,6 +28,7 @@ export const users = pgTable('users', {
   email:     text('email').notNull().unique(),
   password:  text('password').notNull(),
   role:      userRoleEnum('role').default('user').notNull(),
+  status:    userStatusEnum('status').default('active').notNull(),
   avatarUrl: text('avatar_url'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 })
@@ -39,6 +42,7 @@ export const complaints = pgTable('complaints', {
   imageUrl:       text('image_url'),
   resultImageUrl: text('result_image_url'),
   status:         complaintStatusEnum('status').default('pending').notNull(),
+  priorityLikes:  integer('priority_likes').default(0).notNull(),
   createdAt:      timestamp('created_at').defaultNow().notNull(),
   updatedAt:      timestamp('updated_at').defaultNow().notNull(),
 })

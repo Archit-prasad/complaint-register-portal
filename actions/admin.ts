@@ -6,7 +6,7 @@ import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { randomUUID } from 'node:crypto'
 import { db } from '@/lib/db'
-import { complaints, notifications } from '@/lib/db/schema'
+import { complaints, notifications, users } from '@/lib/db/schema'
 import { verifyAdminSession } from '@/lib/dal'
 import { eq } from 'drizzle-orm'
 import type { FormState, ComplaintStatus } from '@/types'
@@ -49,6 +49,18 @@ export async function updateComplaintStatus(prevState: FormState, formData: Form
   revalidatePath(`/complaint/${complaintId}`)
 
   return { success: true }
+}
+
+export async function banUser(userId: string) {
+  await verifyAdminSession()
+  await db.update(users).set({ status: 'banned' }).where(eq(users.id, userId))
+  revalidatePath('/admin')
+}
+
+export async function unbanUser(userId: string) {
+  await verifyAdminSession()
+  await db.update(users).set({ status: 'active' }).where(eq(users.id, userId))
+  revalidatePath('/admin')
 }
 
 export async function uploadResultImage(prevState: FormState, formData: FormData): Promise<FormState> {

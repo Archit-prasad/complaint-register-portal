@@ -1,4 +1,5 @@
 export type UserRole = 'user' | 'admin'
+export type UserStatus = 'active' | 'banned'
 export type ComplaintStatus = 'pending' | 'in_review' | 'resolved'
 export type NotificationType = 'status_change' | 'comment' | 'like'
 
@@ -7,8 +8,19 @@ export type User = {
   name: string
   email: string
   role: UserRole
+  status: UserStatus
   avatarUrl: string | null
   createdAt: Date
+}
+
+export type AdminUser = {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  status: UserStatus
+  createdAt: Date
+  complaintCount: number
 }
 
 /** Shape returned by feed / detail queries */
@@ -21,6 +33,7 @@ export type FeedComplaint = {
   imageUrl: string | null
   resultImageUrl: string | null
   status: ComplaintStatus
+  priorityLikes: number
   createdAt: Date
   updatedAt: Date
   userName: string

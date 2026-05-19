@@ -41,6 +41,10 @@ export async function login(prevState: FormState, formData: FormData): Promise<F
     return { message: 'Invalid email or password. Please try again.' }
   }
 
+  if (user.status === 'banned') {
+    return { message: 'Your account has been suspended for violating platform guidelines.' }
+  }
+
   await createSession(user.id, user.role)
   redirect(user.role === 'admin' ? '/admin' : '/feed')
 }
