@@ -11,41 +11,46 @@ export function VideoBackground() {
   const [mounted, setMounted] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  // Step 1: mark client mount so we know the real theme is available
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Step 2: when theme changes (after mount), imperatively swap src + reload.
-  // We never re-key or unmount the <video> — the DOM node stays alive the
-  // whole time so the browser's hardware compositor has nothing to tear down.
   useEffect(() => {
     if (!mounted) return
     const video = videoRef.current
     if (!video) return
 
-    const next = theme === 'light' ? LIGHT_VIDEO : DARK_VIDEO
-    if (video.src === next) return           // nothing to do
+    // Resolve the correct source for the current theme.
+    // Dark = cinematic evening asset  |  Light = bright daytime clouds.
+    const src = theme === 'light' ? LIGHT_VIDEO : DARK_VIDEO
 
-    video.src = next
-    video.load()                             // tells the browser to fetch immediately
-    video.play().catch(() => {})             // autoplay; swallow AbortError on fast toggles
+    // Assign the src imperatively — no JSX attribute so React's reconciler
+    // never fights us by resetting the attribute between renders.
+    video.src = src
+    // Force the browser to pick up the new source immediately.
+    video.load()
+    // Resume playback; catch AbortError thrown when a rapid second toggle
+    // interrupts an in-progress play() promise.
+    video.play().catch(() => {})
   }, [theme, mounted])
 
   return (
-    // bg-slate-950 is always present — it shows instantly while any video
-    // is loading or buffering, preventing the white browser canvas.
-    <div className="absolute inset-0 z-0 bg-slate-950">
+    /*
+     * bg-slate-950 is the permanent fallback canvas. It paints in one CSS
+     * tick — zero network latency — so the screen is never white while a
+     * video is fetching, buffering, or switching sources.
+     */
+    <div className="fixed inset-0 z-0 bg-slate-950">
       <video
         ref={videoRef}
         autoPlay
         muted
         loop
         playsInline
-        // Inline src keeps the first frame correct on SSR and initial paint.
-        // The useEffect above takes over as soon as the component mounts.
-        src={DARK_VIDEO}
-        className="w-full h-full object-cover"
+        /* No src attribute here — the useEffect above owns the src entirely.
+           Keeping src out of JSX prevents React from resetting it on re-renders
+           and stops the dark video from briefly flashing before light mode loads. */
+        className="fixed inset-0 w-full h-full object-cover z-0"
       />
     </div>
   )
