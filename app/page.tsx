@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { VideoBackground } from '@/components/landing/video-background'
 import { AnimatedHeading } from '@/components/landing/animated-heading'
@@ -13,9 +16,27 @@ import {
 } from 'lucide-react'
 
 export default function LandingPage() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Suppress any SSR/client divergence: render nothing until the client has
+  // hydrated. The video background is the only thing that shows while JS loads,
+  // so there is no visible flash — all animated content fades in via FadeIn/
+  // AnimatedHeading which start invisible anyway.
+  if (!mounted) {
+    return (
+      <div className="relative min-h-screen overflow-hidden flex flex-col">
+        <VideoBackground />
+      </div>
+    )
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden flex flex-col">
-      {/* ── Full-screen video background (NO overlays) ── */}
+      {/* ── Full-screen video background ── */}
       <VideoBackground />
 
       {/* ── Navbar ── */}
@@ -96,7 +117,8 @@ export default function LandingPage() {
 
         </div>
       </main>
-      {/* Intellect Studio branding — permanent bottom-left attribution */}
+
+      {/* Intellect Studio branding */}
       <div className="fixed bottom-5 left-5 z-20 font-medium tracking-wider text-sm text-white/40 select-none pointer-events-none">
         Intellect studio
       </div>
