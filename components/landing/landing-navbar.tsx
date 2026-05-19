@@ -1,19 +1,29 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useTheme } from 'next-themes'
 
 const NAV_LINKS = [
-  { label: 'Dashboard', href: '/feed' },
+  { label: 'Dashboard',   href: '/feed' },
   { label: 'Public Feed', href: '/feed' },
-  { label: 'Guidelines', href: '#' },
-  { label: 'Statistics', href: '#' },
+  { label: 'Guidelines',  href: '#' },
+  { label: 'Statistics',  href: '#' },
 ]
 
 export function LandingNavbar() {
   const { theme } = useTheme()
-  const isDark = theme !== 'light'
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Before mount: render the exact same markup the server would produce so
+  // React's hydration pass sees a perfect match. Theme-dependent classes
+  // are locked to the dark-mode defaults (which is also the defaultTheme).
+  const isDark = !mounted || theme !== 'light'
 
   return (
     <header className="absolute top-0 left-0 right-0 z-20 px-6 md:px-12 lg:px-16 pt-6">
