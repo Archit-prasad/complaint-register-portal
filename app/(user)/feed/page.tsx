@@ -1,14 +1,15 @@
-import Link from 'next/link'
-import { PlusCircle, TrendingUp, Star } from 'lucide-react'
+import { TrendingUp, Star } from 'lucide-react'
 import { getUser } from '@/lib/dal'
 import { getComplaints, getResolvedCount } from '@/lib/queries'
-import { ComplaintFeed } from '@/components/complaint/complaint-feed'
+import { refreshStats } from '@/actions/feed'
+import { FeedDashboard } from '@/components/feed/feed-dashboard'
 
 export default async function FeedPage() {
   const user = await getUser()
-  const [complaints, resolvedCount] = await Promise.all([
+  const [complaints, resolvedCount, stats] = await Promise.all([
     getComplaints(user?.id),
     getResolvedCount(),
+    refreshStats(),
   ])
 
   const satisfactionRate = resolvedCount > 0
@@ -17,10 +18,9 @@ export default async function FeedPage() {
 
   return (
     <div className="min-h-screen transition-colors duration-500 bg-background">
-      <div className="mx-auto max-w-2xl px-4 py-8">
-
-        {/* Dynamic Community Milestones Banner */}
-        <div className="mb-6 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 dark:border-emerald-500/30 px-5 py-4 flex items-start gap-3">
+      {/* Community milestones banner — full width above the grid */}
+      <div className="max-w-7xl mx-auto px-4 pt-6">
+        <div className="mb-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 dark:border-emerald-500/30 px-5 py-4 flex items-start gap-3">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-500">
             <TrendingUp className="h-4 w-4" />
           </div>
@@ -61,26 +61,9 @@ export default async function FeedPage() {
             )}
           </div>
         </div>
-
-        {/* Feed header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Public Feed</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Recent civic issues reported in your area
-            </p>
-          </div>
-          <Link
-            href="/complaint/create"
-            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-200 shadow-sm"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Report Issue
-          </Link>
-        </div>
-
-        <ComplaintFeed complaints={complaints} />
       </div>
+
+      <FeedDashboard complaints={complaints} initialStats={stats} />
     </div>
   )
 }
